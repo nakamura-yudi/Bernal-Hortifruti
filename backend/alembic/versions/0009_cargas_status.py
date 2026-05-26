@@ -16,9 +16,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "cargas",
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="aberta"),
+    op.execute(
+        "ALTER TABLE cargas ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'aberta'"
     )
 
 
