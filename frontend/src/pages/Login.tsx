@@ -48,9 +48,6 @@ export default function Login() {
           <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
             Sistema de Gestão de Transportes
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Use: <strong>eduardon</strong> / <strong>Goku@123</strong>
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
@@ -63,7 +60,7 @@ export default function Login() {
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 required
-                placeholder="Digite seu login (ex: eduardon)"
+                placeholder="Digite seu login"
                 className="mt-1"
               />
             </div>
