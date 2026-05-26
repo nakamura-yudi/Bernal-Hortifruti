@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 210 11% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 11% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 11% 15%;
+
+    /* Bernal Hortifruti blue theme */
+    --primary: 214 84% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 214 84% 42%;
+    --primary-light: 214 60% 95%;
+
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 210 11% 15%;
+
+    --muted: 210 16% 93%;
+    --muted-foreground: 210 11% 46%;
+
+    --accent: 214 60% 95%;
+    --accent-foreground: 214 84% 42%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 16% 90%;
+    --input: 210 16% 90%;
+    --ring: 214 84% 50%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar styling */
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 210 11% 15%;
+    --sidebar-primary: 214 84% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 60% 95%;
+    --sidebar-accent-foreground: 214 84% 42%;
+    --sidebar-border: 210 16% 92%;
+    --sidebar-ring: 214 84% 50%;
+
+    /* Shadows for depth */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  .dark {
+    --background: 210 20% 10%;
+    --foreground: 210 16% 93%;
+
+    --card: 210 20% 13%;
+    --card-foreground: 210 16% 93%;
+
+    --popover: 210 20% 13%;
+    --popover-foreground: 210 16% 93%;
+
+    --primary: 214 84% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 214 84% 62%;
+    --primary-light: 214 40% 25%;
+
+    --secondary: 210 16% 20%;
+    --secondary-foreground: 210 16% 93%;
+
+    --muted: 210 16% 20%;
+    --muted-foreground: 210 11% 65%;
+
+    --accent: 214 40% 25%;
+    --accent-foreground: 214 84% 55%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 16% 20%;
+    --input: 210 16% 20%;
+    --ring: 214 84% 55%;
+
+    --sidebar-background: 210 20% 8%;
+    --sidebar-foreground: 210 16% 93%;
+    --sidebar-primary: 214 84% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 40% 20%;
+    --sidebar-accent-foreground: 214 84% 62%;
+    --sidebar-border: 210 16% 16%;
+    --sidebar-ring: 214 84% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@media print {
+  :root,
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 30%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+    --border: 0 0% 75%;
+    --input: 0 0% 75%;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .print-report,
+  .print-report * {
+    color: #000 !important;
+    background: #fff !important;
+    border-color: #cfcfcf !important;
+  }
+}
