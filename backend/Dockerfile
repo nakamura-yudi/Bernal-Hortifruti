@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY alembic ./alembic
 COPY app ./app
+COPY scripts ./scripts
 COPY entrypoint.sh ./entrypoint.sh
 
 RUN chmod +x /code/entrypoint.sh
