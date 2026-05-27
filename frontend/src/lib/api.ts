@@ -12,12 +12,8 @@ const isLocalDevHost =
   typeof window !== 'undefined' &&
   ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-const _configUrl = window.__APP_CONFIG__?.API_BASE_URL;
-// Ignora o valor se o envsubst não substituiu o template (ex.: "${API_BASE_URL}" literal)
-const _resolvedConfigUrl = _configUrl && !_configUrl.startsWith('${') ? _configUrl : undefined;
-
 const API_BASE_URL =
-  _resolvedConfigUrl ||
+  window.__APP_CONFIG__?.API_BASE_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   (isLocalDevHost ? 'http://localhost:8000/api/v1' : undefined) ||
   '/api/v1';
