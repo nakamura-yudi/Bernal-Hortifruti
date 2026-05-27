@@ -10,7 +10,9 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copia como template — o entrypoint substitui ${API_ORIGIN} e gera default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY docker-entrypoint.d/40-generate-env.sh /docker-entrypoint.d/40-generate-env.sh
 
