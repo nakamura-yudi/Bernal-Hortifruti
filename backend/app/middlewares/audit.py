@@ -53,7 +53,9 @@ _AUTH_FIXED: dict[str, str] = {
 }
 
 # Paths que devem ser ignorados pelo middleware
+# /auth/login é auditado diretamente no endpoint (tem acesso ao user completo)
 _SKIP_PATHS: set[str] = {
+    "/auth/login",
     "/auth/refresh",
     "/auth/me",
     "/health",
