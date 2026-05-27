@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Fundo azul -->
+  <rect width="64" height="64" rx="12" fill="#1d4ed8"/>
+  <!-- Caminhão simplificado -->
+  <!-- Cabine -->
+  <rect x="10" y="26" width="20" height="18" rx="2" fill="white"/>
+  <!-- Para-brisa -->
+  <rect x="12" y="28" width="16" height="9" rx="1" fill="#1d4ed8" opacity="0.5"/>
+  <!-- Carroceria -->
+  <rect x="30" y="22" width="24" height="22" rx="2" fill="white"/>
+  <!-- Rodas -->
+  <circle cx="18" cy="46" r="5" fill="#1e3a8a"/>
+  <circle cx="18" cy="46" r="2.5" fill="white"/>
+  <circle cx="42" cy="46" r="5" fill="#1e3a8a"/>
+  <circle cx="42" cy="46" r="2.5" fill="white"/>
+  <!-- Folha no canto superior direito -->
+  <path d="M52 10 C52 10 58 12 58 18 C58 18 52 18 52 12 Z" fill="#60a5fa"/>
+  <path d="M52 10 L52 18" stroke="#60a5fa" stroke-width="1" stroke-linecap="round"/>
+</svg>
