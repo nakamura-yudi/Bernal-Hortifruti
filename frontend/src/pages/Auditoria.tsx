@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,58 @@ const ACTION_OPTIONS = [
 ];
 
 const PAGE_SIZE = 50;
+
+// ── Renderiza o JSON de detalhes de forma legível ──────────────────────────────
+function DetailsCell({ details, ip }: { details: Record<string, any> | null; ip: string | null }) {
+  if (!details && !ip) return <span className="text-muted-foreground">—</span>;
+
+  const renderValue = (value: any): string => {
+    if (Array.isArray(value)) return value.length ? value.join(', ') : '(vazio)';
+    if (typeof value === 'boolean') return value ? 'sim' : 'não';
+    if (value === null || value === undefined) return '—';
+    return String(value);
+  };
+
+  const renderEntry = (key: string, value: any): React.ReactNode => {
+    // Objeto de alteração: { de: X, para: Y }
+    if (value && typeof value === 'object' && !Array.isArray(value) && ('de' in value || 'para' in value)) {
+      return (
+        <span key={key}>
+          <span className="font-medium capitalize">{key}:</span>{' '}
+          <span className="line-through text-muted-foreground">{renderValue(value.de)}</span>
+          {' → '}
+          <span className="text-foreground">{renderValue(value.para)}</span>
+        </span>
+      );
+    }
+    // Objeto aninhado de alterações
+    if (value && typeof value === 'object' && !Array.isArray(value) && key === 'alterações') {
+      const entries = Object.entries(value);
+      if (entries.length === 0) return <span key={key} className="text-muted-foreground">sem alterações</span>;
+      return (
+        <span key={key} className="flex flex-col gap-0.5">
+          {entries.map(([k, v]) => renderEntry(k, v))}
+        </span>
+      );
+    }
+    return (
+      <span key={key}>
+        <span className="font-medium capitalize">{key}:</span> {renderValue(value)}
+      </span>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-0.5 text-xs">
+      {details && Object.entries(details).map(([key, value]) => (
+        <div key={key}>{renderEntry(key, value)}</div>
+      ))}
+      {ip && (
+        <div className="text-muted-foreground font-mono mt-0.5">IP: {ip}</div>
+      )}
+    </div>
+  );
+}
 
 // ── Componente ─────────────────────────────────────────────────────────────────
 
@@ -183,23 +235,22 @@ export default function Auditoria() {
           ) : (
             <>
               {/* Cabeçalho da tabela */}
-              <div className="hidden grid-cols-[180px_1fr_100px_100px_120px_1fr] gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+              <div className="hidden grid-cols-[160px_1fr_110px_100px_1fr] gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
                 <span>Data / Hora</span>
                 <span>Usuário</span>
                 <span>Ação</span>
                 <span>Recurso</span>
-                <span>ID</span>
-                <span>IP</span>
+                <span>Detalhes</span>
               </div>
 
               <div className="divide-y">
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="grid gap-2 px-4 py-3 text-sm hover:bg-muted/30 sm:grid-cols-[180px_1fr_100px_100px_120px_1fr]"
+                    className="grid gap-2 px-4 py-3 text-sm hover:bg-muted/30 sm:grid-cols-[160px_1fr_110px_100px_1fr]"
                   >
                     {/* Data */}
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                       {formatDate(item.created_at)}
                     </span>
 
@@ -219,15 +270,8 @@ export default function Auditoria() {
                       {item.resource_type ?? '—'}
                     </span>
 
-                    {/* ID do recurso */}
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {item.resource_id ?? '—'}
-                    </span>
-
-                    {/* IP */}
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {item.ip_address ?? '—'}
-                    </span>
+                    {/* Detalhes */}
+                    <DetailsCell details={item.details} ip={item.ip_address} />
                   </div>
                 ))}
               </div>

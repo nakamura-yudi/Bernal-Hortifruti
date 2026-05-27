@@ -40,6 +40,7 @@ def login(
         user_name=user.name,
         resource_type="auth",
         ip_address=ip,
+        details={"perfis": [r.name for r in user.roles]},
     )
 
     db.commit()

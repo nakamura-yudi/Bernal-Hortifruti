@@ -165,6 +165,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
         user_id, user_email, user_name = _extract_user(request)
         ip = _get_ip(request)
 
+        details = getattr(request.state, "audit_details", None)
+
         try:
             with SessionLocal() as session:
                 AuditService(session).log(
@@ -175,6 +177,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                     resource_type=resource_type,
                     resource_id=resource_id,
                     ip_address=ip,
+                    details=details,
                 )
                 session.commit()
         except Exception:

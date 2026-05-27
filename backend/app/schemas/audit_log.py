@@ -16,6 +16,7 @@ class AuditLogRead(BaseModel):
     resource_type: str | None
     resource_id: str | None
     ip_address: str | None
+    details: dict | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

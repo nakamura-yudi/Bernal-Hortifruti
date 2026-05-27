@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -59,7 +59,7 @@ def list_users(db: Session = Depends(get_db)) -> list[UserRead]:
 
 
 @router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_admin_user)])
-def create_user(payload: UserCreate, db: Session = Depends(get_db)) -> UserRead:
+def create_user(payload: UserCreate, request: Request, db: Session = Depends(get_db)) -> UserRead:
     existing = db.scalar(select(User).where(User.email == payload.email))
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User email already exists")
@@ -76,6 +76,13 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)) -> UserRead:
     db.flush()
     db.commit()
     db.refresh(user)
+
+    request.state.audit_details = {
+        "nome": user.name,
+        "email": user.email,
+        "perfis": [r.name for r in user.roles],
+        "ativo": user.is_active,
+    }
     return UserRead.model_validate(user)
 
 
@@ -83,6 +90,7 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)) -> UserRead:
 def update_user(
     user_id: int,
     payload: UserUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> UserRead:
@@ -90,28 +98,47 @@ def update_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    alteracoes: dict = {}
+
     if payload.email and payload.email != user.email:
         existing = db.scalar(select(User).where(User.email == payload.email))
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User email already exists")
+        alteracoes["email"] = {"de": user.email, "para": payload.email}
         user.email = payload.email
 
-    if payload.name is not None:
+    if payload.name is not None and payload.name != user.name:
+        alteracoes["nome"] = {"de": user.name, "para": payload.name}
         user.name = payload.name
-    if payload.is_active is not None:
+
+    if payload.is_active is not None and payload.is_active != user.is_active:
         if user.id == current_user.id and payload.is_active is False:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot deactivate your own user",
             )
+        alteracoes["ativo"] = {"de": user.is_active, "para": payload.is_active}
         user.is_active = payload.is_active
+
     if payload.password:
+        alteracoes["senha"] = "alterada"
         user.password_hash = get_password_hash(payload.password)
+
     if payload.role_names is not None:
-        user.roles = _resolve_roles(db, payload.role_names)
+        perfis_antigos = sorted(r.name for r in user.roles)
+        novos_roles = _resolve_roles(db, payload.role_names)
+        perfis_novos = sorted(r.name for r in novos_roles)
+        if perfis_antigos != perfis_novos:
+            alteracoes["perfis"] = {"de": perfis_antigos, "para": perfis_novos}
+        user.roles = novos_roles
 
     db.commit()
     db.refresh(user)
+
+    request.state.audit_details = {
+        "usuario": user.email,
+        "alterações": alteracoes,
+    }
     return UserRead.model_validate(user)
 
 
@@ -123,15 +150,23 @@ def update_user(
 def update_user_permissions(
     user_id: int,
     payload: UserPermissionsUpdate,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UserRead:
     user = db.scalar(_query_users(db).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    perms_antigas = sorted(p.name for p in user.permissions)
     user.permissions = _resolve_permissions(db, payload.permission_names)
+    perms_novas = sorted(p.name for p in user.permissions)
     db.commit()
     db.refresh(user)
+
+    request.state.audit_details = {
+        "usuario": user.email,
+        "permissões": {"de": perms_antigas, "para": perms_novas},
+    }
     return UserRead.model_validate(user)
 
 
@@ -143,6 +178,7 @@ def update_user_permissions(
 def reset_user_password(
     user_id: int,
     payload: ResetPasswordRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> None:
     user = db.get(User, user_id)
@@ -154,10 +190,16 @@ def reset_user_password(
     db.commit()
     AuthService(db).revoke_user_sessions(user_id)
 
+    request.state.audit_details = {
+        "usuario": user.email,
+        "nome": user.name,
+    }
+
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_admin_user)])
 def delete_user(
     user_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
@@ -166,5 +208,11 @@ def delete_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     if user.id == current_user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete your own user")
+
+    request.state.audit_details = {
+        "nome": user.name,
+        "email": user.email,
+        "perfis": [r.name for r in user.roles],
+    }
     db.delete(user)
     db.commit()

@@ -25,6 +25,7 @@ class AuditService:
         resource_type: str | None = None,
         resource_id: str | None = None,
         ip_address: str | None = None,
+        details: dict | None = None,
     ) -> AuditLog:
         entry = AuditLog(
             user_id=user_id,
@@ -34,6 +35,7 @@ class AuditService:
             resource_type=resource_type,
             resource_id=resource_id,
             ip_address=ip_address,
+            details=details,
         )
         self.session.add(entry)
         self.session.flush()
