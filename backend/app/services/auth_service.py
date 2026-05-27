@@ -29,7 +29,10 @@ class AuthService:
 
     def create_token_pair(self, user: User) -> tuple[str, datetime, str, datetime]:
         settings = get_settings()
-        access_token = create_access_token(user.email)
+        access_token = create_access_token(
+            user.email,
+            extra_claims={"user_id": user.id, "user_name": user.name},
+        )
         access_expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
         refresh_token, refresh_expires_at, refresh_jti = create_refresh_token(user.email)
         session = RefreshTokenSession(
@@ -67,7 +70,10 @@ class AuthService:
             raise ValueError("Invalid refresh token")
 
         token_session.revoked_at = datetime.now(timezone.utc)
-        access_token = create_access_token(subject)
+        access_token = create_access_token(
+            subject,
+            extra_claims={"user_id": user.id, "user_name": user.name},
+        )
         access_expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
         new_refresh_token, refresh_expires_at, new_refresh_jti = create_refresh_token(subject)
         token_session.replaced_by_jti = new_refresh_jti

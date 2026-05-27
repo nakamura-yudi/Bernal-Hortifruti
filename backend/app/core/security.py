@@ -16,17 +16,25 @@ def _create_token(
     token_type: Literal["access", "refresh"],
     settings: Settings | None = None,
     expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
 ) -> tuple[str, datetime, str]:
     settings = settings or get_settings()
     issued_at = datetime.now(timezone.utc)
     expire = issued_at + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     jti = str(uuid4())
     to_encode: dict[str, Any] = {"sub": subject, "exp": expire, "iat": issued_at, "type": token_type, "jti": jti}
+    if extra_claims:
+        to_encode.update(extra_claims)
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM), expire, jti
 
 
-def create_access_token(subject: str, settings: Settings | None = None, expires_delta: timedelta | None = None) -> str:
-    token, _expire, _jti = _create_token(subject, "access", settings, expires_delta)
+def create_access_token(
+    subject: str,
+    settings: Settings | None = None,
+    expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
+) -> str:
+    token, _expire, _jti = _create_token(subject, "access", settings, expires_delta, extra_claims)
     return token
 
 
