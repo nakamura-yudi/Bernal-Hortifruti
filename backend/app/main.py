@@ -6,6 +6,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api.v1.api import router as api_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
+from app.middlewares.audit import AuditMiddleware
 from app.middlewares.rate_limit import RateLimitMiddleware
 from app.middlewares.security import SecurityHeadersMiddleware
 
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.add_middleware(HTTPSRedirectMiddleware)
     app.add_middleware(SecurityHeadersMiddleware, settings=settings)
     app.add_middleware(RateLimitMiddleware, settings=settings)
+    app.add_middleware(AuditMiddleware, api_prefix=settings.api_prefix)
 
     register_routes(app, settings)
     return app

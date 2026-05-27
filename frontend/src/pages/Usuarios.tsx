@@ -23,8 +23,11 @@ export default function Usuarios() {
   const [search, setSearch] = useState('');
   const [openCreate, setOpenCreate] = useState(false);
   const [openRole, setOpenRole] = useState(false);
+  const [openReset, setOpenReset] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [selectedRoleName, setSelectedRoleName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
     email: '',
@@ -132,6 +135,34 @@ export default function Usuarios() {
     }
   };
 
+  const openResetDialog = (user: any) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setOpenReset(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await usersAPI.resetPassword(selectedUser.id, newPassword);
+      toast.success(`Senha de ${selectedUser.name ?? selectedUser.email} redefinida com sucesso`);
+      setOpenReset(false);
+      setSelectedUser(null);
+      setNewPassword('');
+    } catch (error: any) {
+      console.error('Erro ao redefinir senha:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao redefinir senha');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) {
@@ -220,6 +251,46 @@ export default function Usuarios() {
         </CardHeader>
         <CardContent className="space-y-3">
           <Dialog
+            open={openReset}
+            onOpenChange={(open) => {
+              setOpenReset(open);
+              if (!open) {
+                setSelectedUser(null);
+                setNewPassword('');
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  Redefinir senha
+                  {selectedUser ? `: ${selectedUser.name ?? selectedUser.email}` : ''}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  O usuário será desconectado imediatamente e precisará entrar com a nova senha.
+                </p>
+                <Input
+                  placeholder="Nova senha (mínimo 6 caracteres)"
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter') void handleResetPassword(); }}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setOpenReset(false)} disabled={isResetting}>
+                    Cancelar
+                  </Button>
+                  <Button variant="destructive" onClick={handleResetPassword} disabled={isResetting}>
+                    {isResetting ? 'Redefinindo...' : 'Redefinir senha'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
             open={openRole}
             onOpenChange={(open) => {
               setOpenRole(open);
@@ -267,7 +338,7 @@ export default function Usuarios() {
             <p className="text-center text-muted-foreground py-8">Nenhum usuário encontrado.</p>
           ) : (
             <div className="space-y-3">
-              <div className="hidden grid-cols-[2fr_2fr_1fr_1fr_220px] gap-3 rounded-md bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground sm:grid">
+              <div className="hidden grid-cols-[2fr_2fr_1fr_1fr_320px] gap-3 rounded-md bg-muted/40 px-4 py-2 text-sm font-medium text-muted-foreground sm:grid">
                 <span>Nome</span>
                 <span>Email</span>
                 <span>Perfil</span>
@@ -282,7 +353,7 @@ export default function Usuarios() {
                 return (
                   <div
                     key={user.id}
-                    className="grid gap-4 rounded-xl border bg-background/80 px-4 py-4 shadow-sm sm:grid-cols-[2fr_2fr_1fr_1fr_220px]"
+                    className="grid gap-4 rounded-xl border bg-background/80 px-4 py-4 shadow-sm sm:grid-cols-[2fr_2fr_1fr_1fr_320px]"
                   >
                     <div className="text-sm font-medium">{user.name ?? 'Sem nome'}</div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
@@ -295,6 +366,13 @@ export default function Usuarios() {
                         onClick={() => openRoleDialog(user)}
                       >
                         Perfil
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openResetDialog(user)}
+                      >
+                        Resetar senha
                       </Button>
                       <Button
                         size="sm"

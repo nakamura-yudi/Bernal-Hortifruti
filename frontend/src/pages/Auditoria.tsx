@@ -1,0 +1,267 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { auditAPI } from '@/lib/api';
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const ACTION_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  login:                   { label: 'Login',               variant: 'secondary' },
+  logout:                  { label: 'Logout',              variant: 'outline' },
+  'troca de senha':        { label: 'Troca de senha',      variant: 'outline' },
+  'reset de senha':        { label: 'Reset de senha',      variant: 'outline' },
+  criação:                 { label: 'Criação',             variant: 'default' },
+  atualização:             { label: 'Atualização',         variant: 'secondary' },
+  exclusão:                { label: 'Exclusão',            variant: 'destructive' },
+  'atualização de permissões': { label: 'Perm. atualizadas', variant: 'secondary' },
+};
+
+function ActionBadge({ action }: { action: string }) {
+  const config = ACTION_LABELS[action] ?? { label: action, variant: 'outline' as const };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+}
+
+const RESOURCE_TYPE_OPTIONS = [
+  '', 'auth', 'usuario', 'perfil', 'permissão', 'frete', 'carga', 'produtor',
+  'produto', 'embalagem', 'veículo', 'manutenção', 'firma', 'relatório', 'serviço',
+];
+
+const ACTION_OPTIONS = [
+  '', 'login', 'logout', 'criação', 'atualização', 'exclusão',
+  'troca de senha', 'reset de senha', 'atualização de permissões',
+];
+
+const PAGE_SIZE = 50;
+
+// ── Componente ─────────────────────────────────────────────────────────────────
+
+export default function Auditoria() {
+  const [items, setItems] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(0);
+
+  // Filtros
+  const [filterAction, setFilterAction] = useState('');
+  const [filterResource, setFilterResource] = useState('');
+  const [filterEmail, setFilterEmail] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const load = useCallback(async (pg: number) => {
+    setIsLoading(true);
+    try {
+      const data = await auditAPI.list({
+        action: filterAction || undefined,
+        resource_type: filterResource || undefined,
+        user_email: filterEmail || undefined,
+        date_from: filterDateFrom ? new Date(filterDateFrom).toISOString() : undefined,
+        date_to: filterDateTo ? new Date(filterDateTo + 'T23:59:59').toISOString() : undefined,
+        skip: pg * PAGE_SIZE,
+        limit: PAGE_SIZE,
+      });
+      setItems(data.items);
+      setTotal(data.total);
+    } catch (err) {
+      console.error('Erro ao carregar auditoria:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filterAction, filterResource, filterEmail, filterDateFrom, filterDateTo]);
+
+  useEffect(() => {
+    setPage(0);
+    void load(0);
+  }, [load]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    void load(newPage);
+  };
+
+  const handleReset = () => {
+    setFilterAction('');
+    setFilterResource('');
+    setFilterEmail('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Cabeçalho */}
+      <div className="rounded-xl border bg-card/60 px-4 py-4 sm:px-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Administração
+        </p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Auditoria</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Registro de logins, criações, alterações e exclusões do sistema.
+        </p>
+      </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={filterAction}
+              onChange={(e) => setFilterAction(e.target.value)}
+            >
+              <option value="">Todas as ações</option>
+              {ACTION_OPTIONS.filter(Boolean).map((a) => (
+                <option key={a} value={a}>{ACTION_LABELS[a]?.label ?? a}</option>
+              ))}
+            </select>
+
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={filterResource}
+              onChange={(e) => setFilterResource(e.target.value)}
+            >
+              <option value="">Todos os recursos</option>
+              {RESOURCE_TYPE_OPTIONS.filter(Boolean).map((r) => (
+                <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+              ))}
+            </select>
+
+            <Input
+              placeholder="E-mail do usuário"
+              value={filterEmail}
+              onChange={(e) => setFilterEmail(e.target.value)}
+            />
+
+            <Input
+              type="date"
+              placeholder="Data inicial"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+            />
+
+            <Input
+              type="date"
+              placeholder="Data final"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {total} registro{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
+            </p>
+            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1">
+              <RotateCcw className="h-3 w-3" />
+              Limpar filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabela */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <p className="py-12 text-center text-muted-foreground">Carregando...</p>
+          ) : items.length === 0 ? (
+            <p className="py-12 text-center text-muted-foreground">Nenhum registro encontrado.</p>
+          ) : (
+            <>
+              {/* Cabeçalho da tabela */}
+              <div className="hidden grid-cols-[180px_1fr_100px_100px_120px_1fr] gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+                <span>Data / Hora</span>
+                <span>Usuário</span>
+                <span>Ação</span>
+                <span>Recurso</span>
+                <span>ID</span>
+                <span>IP</span>
+              </div>
+
+              <div className="divide-y">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-2 px-4 py-3 text-sm hover:bg-muted/30 sm:grid-cols-[180px_1fr_100px_100px_120px_1fr]"
+                  >
+                    {/* Data */}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {formatDate(item.created_at)}
+                    </span>
+
+                    {/* Usuário */}
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{item.user_name ?? '—'}</p>
+                      <p className="truncate text-xs text-muted-foreground">{item.user_email ?? '—'}</p>
+                    </div>
+
+                    {/* Ação */}
+                    <div>
+                      <ActionBadge action={item.action} />
+                    </div>
+
+                    {/* Recurso */}
+                    <span className="text-muted-foreground capitalize">
+                      {item.resource_type ?? '—'}
+                    </span>
+
+                    {/* ID do recurso */}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {item.resource_id ?? '—'}
+                    </span>
+
+                    {/* IP */}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {item.ip_address ?? '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t px-4 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    Página {page + 1} de {totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 0}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page >= totalPages - 1}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    audit,
     auth,
     cargas,
     company_product_prices,
@@ -25,6 +26,7 @@ from app.api.v1.endpoints import (
 
 router = APIRouter()
 
+router.include_router(audit.router)
 router.include_router(auth.router)
 router.include_router(company_product_prices.router)
 router.include_router(users.router)

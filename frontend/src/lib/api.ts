@@ -12,8 +12,12 @@ const isLocalDevHost =
   typeof window !== 'undefined' &&
   ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
+const _configUrl = window.__APP_CONFIG__?.API_BASE_URL;
+// Ignora o valor se o envsubst não substituiu o template (ex.: "${API_BASE_URL}" literal)
+const _resolvedConfigUrl = _configUrl && !_configUrl.startsWith('${') ? _configUrl : undefined;
+
 const API_BASE_URL =
-  window.__APP_CONFIG__?.API_BASE_URL ||
+  _resolvedConfigUrl ||
   import.meta.env.VITE_API_BASE_URL ||
   (isLocalDevHost ? 'http://localhost:8000/api/v1' : undefined) ||
   '/api/v1';
@@ -100,6 +104,11 @@ export const usersAPI = {
 
   updatePermissions: async (id: number, permissionNames: string[]) => {
     const response = await api.put(`/users/${id}/permissions`, { permission_names: permissionNames });
+    return response.data;
+  },
+
+  resetPassword: async (id: number, newPassword: string) => {
+    const response = await api.post(`/users/${id}/reset-password`, { new_password: newPassword });
     return response.data;
   },
 
@@ -515,5 +524,21 @@ export const vendasEmbalagensAPI = {
   delete: async (id: string) => {
     const response = await api.delete(`/vendas-embalagens/${id}`);
     return response.data;
+  },
+};
+
+// Audit API
+export const auditAPI = {
+  list: async (params?: {
+    action?: string;
+    resource_type?: string;
+    user_email?: string;
+    date_from?: string;
+    date_to?: string;
+    skip?: number;
+    limit?: number;
+  }) => {
+    const response = await api.get('/audit', { params });
+    return response.data as { items: any[]; total: number; skip: number; limit: number };
   },
 };

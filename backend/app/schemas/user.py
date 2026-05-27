@@ -30,6 +30,10 @@ class UserPermissionsUpdate(BaseModel):
     permission_names: List[str]
 
 
+class ResetPasswordRequest(BaseModel):
+    new_password: str
+
+
 class UserRead(UserBase):
     id: int
     created_at: datetime

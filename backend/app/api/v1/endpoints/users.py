@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -7,7 +9,8 @@ from app.models.permission import Permission
 from app.core.security import get_password_hash
 from app.models.role import Role
 from app.models.user import User
-from app.schemas.user import UserCreate, UserPermissionsUpdate, UserRead, UserUpdate
+from app.schemas.user import ResetPasswordRequest, UserCreate, UserPermissionsUpdate, UserRead, UserUpdate
+from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -130,6 +133,26 @@ def update_user_permissions(
     db.commit()
     db.refresh(user)
     return UserRead.model_validate(user)
+
+
+@router.post(
+    "/{user_id}/reset-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_current_admin_user)],
+)
+def reset_user_password(
+    user_id: int,
+    payload: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+) -> None:
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user.password_hash = get_password_hash(payload.new_password)
+    user.password_changed_at = datetime.now(timezone.utc)
+    db.commit()
+    AuthService(db).revoke_user_sessions(user_id)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_admin_user)])

@@ -50,6 +50,12 @@ def get_current_user(
     user = UserService(db).get_by_email(subject)
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+
+    if user.password_changed_at is not None:
+        token_iat = payload.get("iat", 0)
+        if token_iat < user.password_changed_at.timestamp():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão invalidada. Faça login novamente.")
+
     return user
 
 

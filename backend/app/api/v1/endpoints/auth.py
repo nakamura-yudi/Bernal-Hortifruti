@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
@@ -8,6 +10,7 @@ from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from app.schemas.auth import AuthLoginRequest, ChangePasswordRequest, RefreshTokenRequest, TokenResponse
 from app.schemas.user import UserRead
+from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -16,6 +19,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/login", response_model=TokenResponse)
 def login(
     payload: AuthLoginRequest,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_app_settings),
@@ -26,6 +30,18 @@ def login(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     access_token, access_expires_at, refresh_token, refresh_expires_at = auth_service.create_token_pair(user)
     set_auth_cookies(response, access_token, refresh_token, access_expires_at, refresh_expires_at, settings)
+
+    forwarded = request.headers.get("X-Forwarded-For")
+    ip = (forwarded.split(",")[0].strip() if forwarded else None) or (request.client.host if request.client else None)
+    AuditService(db).log(
+        "login",
+        user_id=user.id,
+        user_email=user.email,
+        user_name=user.name,
+        resource_type="auth",
+        ip_address=ip,
+    )
+
     db.commit()
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserRead.model_validate(user))
 
@@ -77,6 +93,7 @@ def change_password(
         )
 
     current_user.password_hash = get_password_hash(payload.new_password)
+    current_user.password_changed_at = datetime.now(timezone.utc)
     db.commit()
     AuthService(db).revoke_user_sessions(current_user.id)
     clear_auth_cookies(response, settings)

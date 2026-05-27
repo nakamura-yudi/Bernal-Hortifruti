@@ -27,6 +27,7 @@ DEFAULT_PERMISSIONS = [
     "trip:view",
     "package:move",
     "report:view",
+    "report:delete",
     "charge:edit",
     "producer:view",
     "producer:edit",

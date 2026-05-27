@@ -306,7 +306,7 @@ def report_history_detail(
 def delete_report_history(
     report_id: int,
     db: Session = Depends(get_db),
-    _current_user=Depends(require_permissions("report:view")),
+    _current_user=Depends(require_permissions("report:delete")),
 ) -> None:
     report = db.get(ReportGeneration, report_id)
     if not report:

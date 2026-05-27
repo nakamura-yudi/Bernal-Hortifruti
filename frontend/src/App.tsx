@@ -29,6 +29,7 @@ import ManutencaoRealizadaFormPage from "./pages/ManutencaoRealizadaForm";
 import ListaPrecos from "./pages/ListaPrecos";
 import Usuarios from "./pages/Usuarios";
 import Perfis from "./pages/Perfis";
+import Auditoria from "./pages/Auditoria";
 import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/usuarios" element={<AdminRoute><Usuarios /></AdminRoute>} />
             <Route path="/perfis" element={<AdminRoute><Perfis /></AdminRoute>} />
+            <Route path="/auditoria" element={<AdminRoute><Auditoria /></AdminRoute>} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

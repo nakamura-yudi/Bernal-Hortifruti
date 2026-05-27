@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   UserCircle2,
   KeyRound,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ const navigation = [
 const adminNavigation = [
   { name: 'Usuários', href: '/usuarios', icon: ShieldCheck, adminOnly: true },
   { name: 'Perfis', href: '/perfis', icon: KeyRound, adminOnly: true },
+  { name: 'Auditoria', href: '/auditoria', icon: ClipboardList, adminOnly: true },
 ];
 
 export const DashboardLayout = () => {
