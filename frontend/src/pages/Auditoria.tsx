@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,53 +44,68 @@ const ACTION_OPTIONS = [
 const PAGE_SIZE = 50;
 
 // ── Renderiza o JSON de detalhes de forma legível ──────────────────────────────
-function DetailsCell({ details, ip }: { details: Record<string, any> | null; ip: string | null }) {
-  if (!details && !ip) return <span className="text-muted-foreground">—</span>;
 
-  const renderValue = (value: any): string => {
-    if (Array.isArray(value)) return value.length ? value.join(', ') : '(vazio)';
-    if (typeof value === 'boolean') return value ? 'sim' : 'não';
-    if (value === null || value === undefined) return '—';
-    return String(value);
-  };
+function renderDetailValue(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'boolean') return value ? 'sim' : 'não';
+  if (Array.isArray(value)) return value.length ? value.join(', ') : '(vazio)';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
 
-  const renderEntry = (key: string, value: any): React.ReactNode => {
-    // Objeto de alteração: { de: X, para: Y }
-    if (value && typeof value === 'object' && !Array.isArray(value) && ('de' in value || 'para' in value)) {
-      return (
-        <span key={key}>
-          <span className="font-medium capitalize">{key}:</span>{' '}
-          <span className="line-through text-muted-foreground">{renderValue(value.de)}</span>
-          {' → '}
-          <span className="text-foreground">{renderValue(value.para)}</span>
-        </span>
-      );
-    }
-    // Objeto aninhado de alterações
-    if (value && typeof value === 'object' && !Array.isArray(value) && key === 'alterações') {
-      const entries = Object.entries(value);
-      if (entries.length === 0) return <span key={key} className="text-muted-foreground">sem alterações</span>;
-      return (
-        <span key={key} className="flex flex-col gap-0.5">
-          {entries.map(([k, v]) => renderEntry(k, v))}
-        </span>
-      );
-    }
+function DetailEntry({ label, value }: { label: string; value: unknown }) {
+  // Objeto de alteração: { de: X, para: Y }
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    ('de' in (value as object) || 'para' in (value as object))
+  ) {
+    const change = value as { de?: unknown; para?: unknown };
     return (
-      <span key={key}>
-        <span className="font-medium capitalize">{key}:</span> {renderValue(value)}
+      <span>
+        <span className="font-medium capitalize">{label}:</span>{' '}
+        <span className="line-through text-muted-foreground">{renderDetailValue(change.de)}</span>
+        {' → '}
+        <span className="text-foreground">{renderDetailValue(change.para)}</span>
       </span>
     );
-  };
+  }
+
+  // Objeto aninhado (ex: "alterações": { campo: { de, para } })
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) {
+      return <span className="text-muted-foreground">sem alterações</span>;
+    }
+    return (
+      <span className="flex flex-col gap-0.5">
+        {entries.map(([k, v]) => (
+          <DetailEntry key={k} label={k} value={v} />
+        ))}
+      </span>
+    );
+  }
+
+  return (
+    <span>
+      <span className="font-medium capitalize">{label}:</span> {renderDetailValue(value)}
+    </span>
+  );
+}
+
+function DetailsCell({ details, ip }: { details: Record<string, unknown> | null; ip: string | null }) {
+  if (!details && !ip) return <span className="text-muted-foreground">—</span>;
 
   return (
     <div className="flex flex-col gap-0.5 text-xs">
-      {details && Object.entries(details).map(([key, value]) => (
-        <div key={key}>{renderEntry(key, value)}</div>
-      ))}
-      {ip && (
-        <div className="text-muted-foreground font-mono mt-0.5">IP: {ip}</div>
-      )}
+      {details &&
+        Object.entries(details).map(([key, value]) => (
+          <div key={key}>
+            <DetailEntry label={key} value={value} />
+          </div>
+        ))}
+      {ip && <div className="text-muted-foreground font-mono mt-0.5">IP: {ip}</div>}
     </div>
   );
 }
