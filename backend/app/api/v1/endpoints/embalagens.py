@@ -37,6 +37,7 @@ def _to_read(embalagem: Embalagem) -> EmbalagemRead:
 
 def _sync_components(db: Session, embalagem: Embalagem, components_in: list) -> None:
     embalagem.components.clear()
+    db.flush()
     for comp in components_in:
         embalagem.components.append(
             PackageTypeComponent(
