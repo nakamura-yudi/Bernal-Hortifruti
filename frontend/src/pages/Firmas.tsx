@@ -109,7 +109,7 @@ export default function Firmas() {
                   setOpenCreate(false);
                   loadFirmas();
                 }}
-                onCancel={() => undefined}
+                onCancel={() => setOpenCreate(false)}
               />
             </DialogContent>
           </Dialog>

@@ -50,8 +50,7 @@ const firmaSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   documento: z
     .string()
-    .min(1, 'CNPJ é obrigatório')
-    .refine((value) => isValidCnpj(value), 'CNPJ inválido'),
+    .refine((value) => !value || isValidCnpj(value), 'CNPJ inválido'),
   inscricao_estadual: z.string().optional(),
   cidade: z.string().optional(),
   contato: z.string().optional(),
@@ -101,7 +100,7 @@ export default function FirmaForm({
     try {
       const payload = {
         name: values.nome,
-        document: onlyDigits(values.documento),
+        document: onlyDigits(values.documento) || null,
         state_registration: values.inscricao_estadual || null,
         city: values.cidade || null,
         contact: values.contato || null,
@@ -144,7 +143,7 @@ export default function FirmaForm({
           name="documento"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>CNPJ *</FormLabel>
+              <FormLabel>CNPJ</FormLabel>
               <FormControl>
                 <Input
                   placeholder="00.000.000/0000-00"

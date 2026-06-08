@@ -83,8 +83,7 @@ const produtorSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   cpf_cnpj: z
     .string()
-    .min(1, 'CPF/CNPJ é obrigatório')
-    .refine((value) => isValidCpfCnpj(value), 'CPF/CNPJ inválido'),
+    .refine((value) => !value || isValidCpfCnpj(value), 'CPF/CNPJ inválido'),
   inscricao_estadual: z.string().optional(),
   telefone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
@@ -137,7 +136,7 @@ export default function ProdutorForm({
     try {
       const payload = {
         name: values.nome,
-        document: onlyDigits(values.cpf_cnpj),
+        document: onlyDigits(values.cpf_cnpj) || null,
         state_registration: values.inscricao_estadual || null,
         city: values.cidade || null,
         contact: values.telefone || values.email || null,
@@ -180,7 +179,7 @@ export default function ProdutorForm({
           name="cpf_cnpj"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>CPF/CNPJ *</FormLabel>
+              <FormLabel>CPF/CNPJ</FormLabel>
               <FormControl>
                 <Input
                   placeholder="000.000.000-00 ou 00.000.000/0000-00"

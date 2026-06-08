@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, require_permissions
 from app.models.package_delivery import PackageDelivery
 from app.schemas.package_delivery import PackageDeliveryCreate, PackageDeliveryRead
+from app.services.embalagem_service import expand_components
 
 router = APIRouter(prefix="/package-deliveries", tags=["PackageDeliveries"])
 
@@ -30,6 +31,12 @@ def create_package_delivery(
         quantity=payload.quantity,
     )
     db.add(delivery)
+    for comp in expand_components(db, payload.package_type_id, payload.quantity):
+        db.add(PackageDelivery(
+            producer_id=payload.producer_id,
+            package_type_id=comp["package_type_id"],
+            quantity=comp["quantity"],
+        ))
     try:
         db.commit()
     except Exception as exc:  # pragma: no cover - basic constraint guard

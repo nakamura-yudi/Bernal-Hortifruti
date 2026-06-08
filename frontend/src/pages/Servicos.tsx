@@ -28,6 +28,7 @@ export default function Servicos() {
   const [services, setServices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selected, setSelected] = useState<any | null>(null);
+  const [openCreate, setOpenCreate] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
 
@@ -67,7 +68,7 @@ export default function Servicos() {
             Cadastre servicos adicionais cobrados por produto
           </p>
         </div>
-        <Dialog>
+        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
@@ -80,9 +81,10 @@ export default function Servicos() {
             </DialogHeader>
             <ServiceForm
               onSuccess={() => {
+                setOpenCreate(false);
                 loadServices();
               }}
-              onCancel={() => undefined}
+              onCancel={() => setOpenCreate(false)}
             />
           </DialogContent>
         </Dialog>

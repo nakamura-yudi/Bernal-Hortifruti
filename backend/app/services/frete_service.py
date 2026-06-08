@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.company_product_price import CompanyProductPrice
 from app.models.conta_firma import ContaFirma
 from app.models.embalagem import Embalagem
+from app.services.embalagem_service import expand_components
 from app.models.firma import Firma
 from app.models.frete import (
     FreightItem,
@@ -176,6 +177,18 @@ class FreteService:
             )
             freight.packages.append(freight_package)
 
+            for comp in expand_components(self.session, package.package_type_id, float(quantity)):
+                comp_type = self._get_package_type(comp["package_type_id"])
+                comp_unit_price = Decimal("0") if package.own_packaging else Decimal(str(comp_type.unit_price))
+                comp_qty = Decimal(str(comp["quantity"]))
+                packaging_total += comp_unit_price * comp_qty
+                freight.packages.append(FreightPackageItem(
+                    package_type_id=comp["package_type_id"],
+                    quantity=float(comp_qty),
+                    own_packaging=package.own_packaging,
+                    unit_price=float(comp_unit_price),
+                ))
+
         total_default = base_total + packaging_total + service_total
         total_amount = Decimal(str(payload.total_amount)) if payload.total_amount is not None else total_default
         discount_amount = total_default - total_amount
@@ -255,6 +268,18 @@ class FreteService:
                 unit_price=float(unit_price),
             )
             freight.packages.append(freight_package)
+
+            for comp in expand_components(self.session, package.package_type_id, float(quantity)):
+                comp_type = self._get_package_type(comp["package_type_id"])
+                comp_unit_price = Decimal("0") if package.own_packaging else Decimal(str(comp_type.unit_price))
+                comp_qty = Decimal(str(comp["quantity"]))
+                packaging_total += comp_unit_price * comp_qty
+                freight.packages.append(FreightPackageItem(
+                    package_type_id=comp["package_type_id"],
+                    quantity=float(comp_qty),
+                    own_packaging=package.own_packaging,
+                    unit_price=float(comp_unit_price),
+                ))
 
         total_default = base_total + packaging_total + service_total
         total_amount = (

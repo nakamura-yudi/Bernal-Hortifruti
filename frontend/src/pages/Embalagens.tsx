@@ -92,6 +92,7 @@ export default function Embalagens() {
   const [fretes, setFretes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selected, setSelected] = useState<any | null>(null);
+  const [openCreate, setOpenCreate] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelivery, setOpenDelivery] = useState(false);
@@ -383,7 +384,7 @@ export default function Embalagens() {
 
             <TabsContent value="lista-embalagens" className="space-y-4">
               <div className="flex justify-end">
-                <Dialog>
+                <Dialog open={openCreate} onOpenChange={setOpenCreate}>
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
@@ -396,9 +397,10 @@ export default function Embalagens() {
                     </DialogHeader>
                     <EmbalagemForm
                       onSuccess={() => {
+                        setOpenCreate(false);
                         loadEmbalagens();
                       }}
-                      onCancel={() => undefined}
+                      onCancel={() => setOpenCreate(false)}
                     />
                   </DialogContent>
                 </Dialog>
@@ -488,6 +490,10 @@ export default function Embalagens() {
                                   initialValues={{
                                     tipo: embalagem.name ?? '',
                                     preco_unitario: String(embalagem.unit_price ?? ''),
+                                    components: (embalagem.components ?? []).map((c: any) => ({
+                                      component_id: String(c.component_id),
+                                      quantity: c.quantity,
+                                    })),
                                   }}
                                   onSuccess={() => {
                                     setOpenEdit(false);
