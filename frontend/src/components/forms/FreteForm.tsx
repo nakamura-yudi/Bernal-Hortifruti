@@ -231,14 +231,12 @@ export default function FreteForm({ freteId, initialValues, onSuccess, onCancel 
       const data = await cargasAPI.list();
       const list = Array.isArray(data) ? data : data?.items ?? [];
       setCargas(list);
-      const todayLabel = new Date().toLocaleDateString('en-CA');
-      const activeToday = list.filter((carga) => {
-        const rawDate = typeof carga.load_date === 'string' ? carga.load_date : '';
-        const normalizedDate = rawDate.includes('T') ? rawDate.slice(0, 10) : rawDate;
-        return normalizedDate === todayLabel && carga.status !== 'concluida';
+      const abertas = list.filter((carga) => {
+        const s = (carga.status ?? '').toLowerCase();
+        return s !== 'concluida' && s !== 'encerrada';
       });
-      if (!freteId && !form.getValues('carga_id') && activeToday.length > 0) {
-        form.setValue('carga_id', String(activeToday[0].id));
+      if (!freteId && !form.getValues('carga_id') && abertas.length > 0) {
+        form.setValue('carga_id', String(abertas[0].id));
       }
     } catch (error) {
       console.error('Erro ao carregar cargas:', error);
@@ -371,27 +369,6 @@ export default function FreteForm({ freteId, initialValues, onSuccess, onCancel 
     return `${normalized.slice(8, 10)}/${normalized.slice(5, 7)}/${normalized.slice(0, 4)}`;
   };
 
-  const cargaSequenceMap = useMemo(() => {
-    const map = new Map<number, number>();
-    const byDate = new Map<string, any[]>();
-    cargas.forEach((carga) => {
-      const dateKey = normalizeDate(carga.load_date);
-      if (!dateKey) {
-        return;
-      }
-      const list = byDate.get(dateKey) ?? [];
-      list.push(carga);
-      byDate.set(dateKey, list);
-    });
-    byDate.forEach((list) => {
-      list.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-      list.forEach((carga, index) => {
-        map.set(carga.id, index + 1);
-      });
-    });
-    return map;
-  }, [cargas]);
-
   const watchedItems = form.watch('items');
   const watchedTotal = form.watch('total_amount');
 
@@ -513,36 +490,33 @@ export default function FreteForm({ freteId, initialValues, onSuccess, onCancel 
             control={form.control}
             name="carga_id"
             render={({ field }) => {
-              const todayLabel = new Date().toLocaleDateString('en-CA');
-              const activeCargas = cargas.filter((carga) => {
-                const normalizedDate = normalizeDate(carga.load_date);
-                return normalizedDate === todayLabel && carga.status !== 'concluida';
+              const abertas = cargas.filter((carga) => {
+                const s = (carga.status ?? '').toLowerCase();
+                return s !== 'concluida' && s !== 'encerrada';
               });
               const selectedCarga = cargas.find((carga) => String(carga.id) === field.value);
               const cargaOptions =
-                selectedCarga && !activeCargas.some((carga) => carga.id === selectedCarga.id)
-                  ? [selectedCarga, ...activeCargas]
-                  : activeCargas;
+                selectedCarga && !abertas.some((carga) => carga.id === selectedCarga.id)
+                  ? [selectedCarga, ...abertas]
+                  : abertas;
               const cargaLabel = (carga: any) => {
                 const dateLabel = formatDateBr(carga.load_date) || 'Data';
-                const sequence = cargaSequenceMap.get(carga.id) ?? 0;
-                const sequenceLabel = String(sequence).padStart(2, '0');
-                return `Carga - ${dateLabel}-${sequenceLabel}`;
+                return `Carga #${carga.id} — ${dateLabel}`;
               };
               return (
                 <FormItem>
-                  <FormLabel>Carga do dia</FormLabel>
+                  <FormLabel>Carga</FormLabel>
                   <FormControl>
                     <SearchCombobox
                       value={field.value}
-                      placeholder="Selecione a carga ativa"
+                      placeholder="Selecione a carga"
                       onChange={field.onChange}
-                    options={cargaOptions.map((carga) => ({
-                      value: String(carga.id),
-                      label: cargaLabel(carga),
-                    }))}
-                  />
-                </FormControl>
+                      options={cargaOptions.map((carga) => ({
+                        value: String(carga.id),
+                        label: cargaLabel(carga),
+                      }))}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               );

@@ -109,32 +109,9 @@ export default function Cargas() {
     return 'Aberta';
   };
 
-  const cargaSequenceMap = useMemo(() => {
-    const map = new Map<number, number>();
-    const byDate = new Map<string, any[]>();
-    cargas.forEach((carga) => {
-      const dateKey = normalizeDate(carga.load_date);
-      if (!dateKey) {
-        return;
-      }
-      const list = byDate.get(dateKey) ?? [];
-      list.push(carga);
-      byDate.set(dateKey, list);
-    });
-    byDate.forEach((list) => {
-      list.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-      list.forEach((carga, index) => {
-        map.set(carga.id, index + 1);
-      });
-    });
-    return map;
-  }, [cargas]);
-
   const cargaLabel = (carga: any) => {
     const dateLabel = formatDateBr(carga.load_date) || 'Data';
-    const sequence = cargaSequenceMap.get(carga.id) ?? 0;
-    const sequenceLabel = String(sequence).padStart(2, '0');
-    return `Carga - ${dateLabel}-${sequenceLabel}`;
+    return `Carga #${carga.id} — ${dateLabel}`;
   };
 
   const filteredCargas = useMemo(() => {

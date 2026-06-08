@@ -1,11 +1,13 @@
 """Service layer implementation for frete service."""
 
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.company_product_price import CompanyProductPrice
+from app.models.conta_firma import ContaFirma
 from app.models.embalagem import Embalagem
 from app.models.firma import Firma
 from app.models.frete import (
@@ -72,6 +74,48 @@ class FreteService:
             return
         if not self.session.get(Carga, carga_id):
             raise ValueError(f"Carga not found: {carga_id}")
+
+    def _sync_conta_firma(self, carga_id: int | None, company_id: int) -> None:
+        """Cria, atualiza ou remove a ContaFirma para o par (carga_id, company_id)."""
+        if carga_id is None:
+            return
+
+        fretes = self.session.scalars(
+            select(Frete).where(
+                Frete.carga_id == carga_id,
+                Frete.company_id == company_id,
+            )
+        ).all()
+
+        total = sum(float(f.total_amount) for f in fretes)
+
+        conta = self.session.scalar(
+            select(ContaFirma).where(
+                ContaFirma.carga_id == carga_id,
+                ContaFirma.firma_id == company_id,
+            )
+        )
+
+        if total > 0:
+            carga = self.session.get(Carga, carga_id)
+            firma = self.session.get(Firma, company_id)
+            load_date_fmt = carga.load_date.strftime("%d/%m/%Y") if carga else str(carga_id)
+            firma_name = firma.name if firma else str(company_id)
+            descricao = f"Fretes - Carga #{carga_id} - {load_date_fmt} - {firma_name}"
+            if conta:
+                conta.valor_total = total
+                conta.descricao = descricao
+            else:
+                self.session.add(ContaFirma(
+                    firma_id=company_id,
+                    carga_id=carga_id,
+                    descricao=descricao,
+                    valor_total=total,
+                    data_emissao=date.today(),
+                ))
+        else:
+            if conta:
+                self.session.delete(conta)
 
     def create_frete(self, payload: FreteCreate) -> Frete:
         self._ensure_entities(payload.producer_id, payload.company_id)
@@ -143,6 +187,8 @@ class FreteService:
         freight.discount_amount = float(discount_amount)
 
         self.session.add(freight)
+        self.session.flush()  # torna o frete visível na transação antes do sync
+        self._sync_conta_firma(freight.carga_id, freight.company_id)
         self.session.commit()
         self.session.refresh(freight)
         return freight
@@ -154,6 +200,9 @@ class FreteService:
 
         self._ensure_entities(payload.producer_id, payload.company_id)
         self._ensure_carga(payload.carga_id)
+
+        old_carga_id = freight.carga_id
+        old_company_id = freight.company_id
 
         base_total = Decimal("0")
         packaging_total = Decimal("0")
@@ -219,6 +268,22 @@ class FreteService:
         freight.total_amount = float(total_amount)
         freight.discount_amount = float(discount_amount)
 
+        self.session.flush()  # aplica as mudanças na transação antes do sync
+        # Sync par antigo se mudou
+        if old_carga_id != payload.carga_id or old_company_id != payload.company_id:
+            self._sync_conta_firma(old_carga_id, old_company_id)
+        self._sync_conta_firma(freight.carga_id, freight.company_id)
         self.session.commit()
         self.session.refresh(freight)
         return freight
+
+    def delete_frete(self, frete_id: int) -> None:
+        freight = self.session.get(Frete, frete_id)
+        if not freight:
+            raise ValueError(f"Frete not found: {frete_id}")
+        carga_id = freight.carga_id
+        company_id = freight.company_id
+        self.session.delete(freight)
+        self.session.flush()  # marca como deletado antes do sync
+        self._sync_conta_firma(carga_id, company_id)
+        self.session.commit()

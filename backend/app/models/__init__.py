@@ -10,6 +10,8 @@ from app.models.carga import Carga
 from app.models.veiculo import Veiculo
 from app.models.tipo_manutencao import TipoManutencao
 from app.models.manutencao import Manutencao
+from app.models.conta_firma import ContaFirma
+from app.models.pagamento import LotePagamento, Pagamento
 from app.models.package_stock_entry import PackageStockEntry
 from app.models.package_delivery import PackageDelivery
 from app.models.permission import Permission
@@ -35,6 +37,9 @@ __all__ = [
     "Veiculo",
     "TipoManutencao",
     "Manutencao",
+    "ContaFirma",
+    "LotePagamento",
+    "Pagamento",
     "PackageStockEntry",
     "Permission",
     "PackageDelivery",

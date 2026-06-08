@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, Filter, Calendar, Eye, Pencil, Trash2, DollarSign, Box } from 'lucide-react';
+import { Plus, Search, Calendar, Eye, Pencil, Trash2, DollarSign, Box } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 
 export default function Fretes() {
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [fretes, setFretes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
@@ -103,23 +104,27 @@ export default function Fretes() {
   };
 
   const filteredFretes = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) {
-      return fretes;
-    }
     return fretes.filter((frete) => {
-      const producer = String(frete.producer_id ?? '');
-      const company = String(frete.company_id ?? '');
-      const origin = String(frete.origin_city ?? '');
-      const destination = String(frete.destination_city ?? '');
+      if (dateFilter) {
+        const freteDate = frete.created_at
+          ? new Date(frete.created_at).toLocaleDateString('en-CA')
+          : '';
+        if (freteDate !== dateFilter) return false;
+      }
+      const term = search.trim().toLowerCase();
+      if (!term) return true;
+      const producer = producerNameById(frete.producer_id).toLowerCase();
+      const company = companyNameById(frete.company_id).toLowerCase();
+      const origin = String(frete.origin_city ?? '').toLowerCase();
+      const destination = String(frete.destination_city ?? '').toLowerCase();
       return (
         producer.includes(term) ||
         company.includes(term) ||
-        origin.toLowerCase().includes(term) ||
-        destination.toLowerCase().includes(term)
+        origin.includes(term) ||
+        destination.includes(term)
       );
     });
-  }, [fretes, search]);
+  }, [fretes, search, dateFilter, produtores, firmas]);
 
   const producerNameById = (id?: number) => {
     if (!id) {
@@ -263,21 +268,33 @@ export default function Fretes() {
 
       <Card className="border-dashed">
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar fretes por produtor, firma ou cidade..."
+                placeholder="Buscar por produtor, firma ou cidade..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Filter className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Filtros</span>
-              <span className="sm:hidden">Filtrar</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-44"
+                title="Filtrar por data"
+              />
+              {dateFilter && (
+                <button
+                  onClick={() => setDateFilter('')}
+                  className="text-xs text-muted-foreground hover:text-foreground underline whitespace-nowrap"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

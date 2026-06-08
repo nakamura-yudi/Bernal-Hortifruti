@@ -25,3 +25,4 @@ class Produtor(Base):
     product_prices: Mapped[list["CompanyProductPrice"]] = relationship(
         back_populates="producer", cascade="all, delete-orphan"
     )
+    pagamentos: Mapped[list["Pagamento"]] = relationship(back_populates="produtor")

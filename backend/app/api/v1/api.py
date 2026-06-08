@@ -6,11 +6,13 @@ from app.api.v1.endpoints import (
     cargas,
     company_product_prices,
     coletas,
+    contas_firma,
     embalagens,
     veiculos,
     firmas,
     fretes,
     freight_rates,
+    pagamentos,
     permissions,
     produtores,
     produtos,
@@ -46,4 +48,6 @@ router.include_router(tipos_manutencao.router)
 router.include_router(manutencoes.router)
 router.include_router(package_deliveries.router)
 router.include_router(package_stock.router)
+router.include_router(pagamentos.router)
+router.include_router(contas_firma.router)
 router.include_router(reports.router)

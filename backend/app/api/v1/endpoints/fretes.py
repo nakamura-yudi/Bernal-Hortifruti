@@ -56,8 +56,8 @@ def delete_frete(
     db: Session = Depends(get_db),
     _current_user=Depends(require_permissions("freight:edit")),
 ) -> None:
-    frete = db.get(Frete, frete_id)
-    if not frete:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Frete not found")
-    db.delete(frete)
-    db.commit()
+    service = FreteService(db)
+    try:
+        service.delete_frete(frete_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

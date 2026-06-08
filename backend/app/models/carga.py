@@ -32,6 +32,7 @@ class Carga(Base):
 
     veiculo: Mapped["Veiculo"] = relationship(back_populates="cargas")
     fretes: Mapped[list["Frete"]] = relationship(back_populates="carga")
+    contas: Mapped[list["ContaFirma"]] = relationship(back_populates="carga")
 
     @property
     def frete_ids(self) -> list[int]:

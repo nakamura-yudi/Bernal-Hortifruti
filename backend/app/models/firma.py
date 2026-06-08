@@ -19,3 +19,5 @@ class Firma(Base):
     contact: Mapped[str | None] = mapped_column(String(120))
 
     freights: Mapped[list["Frete"]] = relationship(back_populates="company")
+    lotes_pagamento: Mapped[list["LotePagamento"]] = relationship(back_populates="firma")
+    contas: Mapped[list["ContaFirma"]] = relationship(back_populates="firma")

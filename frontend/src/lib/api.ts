@@ -523,6 +523,70 @@ export const vendasEmbalagensAPI = {
   },
 };
 
+// Contas Firma API
+export const contasFirmaAPI = {
+  list: async (params?: { firma_id?: number; data_de?: string; data_ate?: string; status?: string }) => {
+    const response = await api.get('/contas-firma', { params });
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/contas-firma', data);
+    return response.data;
+  },
+
+  gerar: async (carga_id: number) => {
+    const response = await api.post('/contas-firma/gerar', { carga_id });
+    return response.data;
+  },
+
+  pagar: async (id: number, data_pagamento: string) => {
+    const response = await api.patch(`/contas-firma/${id}/pagar`, { data_pagamento });
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/contas-firma/${id}`);
+  },
+};
+
+// Pagamentos API
+export const lotesAPI = {
+  list: async () => {
+    const response = await api.get('/lotes-pagamento');
+    return response.data;
+  },
+
+  get: async (id: number) => {
+    const response = await api.get(`/lotes-pagamento/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/lotes-pagamento', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/lotes-pagamento/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/lotes-pagamento/${id}`);
+  },
+
+  addItem: async (loteId: number, data: any) => {
+    const response = await api.post(`/lotes-pagamento/${loteId}/itens`, data);
+    return response.data;
+  },
+
+  updateItem: async (loteId: number, itemId: number, data: any) => {
+    const response = await api.patch(`/lotes-pagamento/${loteId}/itens/${itemId}`, data);
+    return response.data;
+  },
+};
+
 // Audit API
 export const auditAPI = {
   list: async (params?: {

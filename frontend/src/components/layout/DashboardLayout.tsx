@@ -20,6 +20,8 @@ import {
   UserCircle2,
   KeyRound,
   ClipboardList,
+  Wallet,
+  ReceiptText,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -41,6 +43,8 @@ const navigation = [
   { name: 'Lista de Precos', href: '/lista-precos', icon: Tag },
   { name: 'Produtos', href: '/produtos', icon: Apple },
   { name: 'Embalagens', href: '/embalagens', icon: Box },
+  { name: 'Pagamentos', href: '/pagamentos', icon: Wallet },
+  { name: 'Contas Firmas', href: '/contas-firma', icon: ReceiptText },
   { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
   { name: 'Serviços', href: '/servicos', icon: ShoppingBag },
   { name: 'Frota', href: '/frota', icon: Car },

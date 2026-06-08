@@ -31,6 +31,9 @@ import Usuarios from "./pages/Usuarios";
 import Perfis from "./pages/Perfis";
 import Auditoria from "./pages/Auditoria";
 import Perfil from "./pages/Perfil";
+import ContasFirma from "./pages/ContasFirma";
+import Pagamentos from "./pages/Pagamentos";
+import PagamentoFormPage from "./pages/PagamentoFormPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +69,10 @@ const App = () => (
             <Route path="/manutencoes" element={<Manutencoes />} />
             <Route path="/manutencoes/tipos/new" element={<TipoManutencaoFormPage />} />
             <Route path="/manutencoes/new" element={<ManutencaoRealizadaFormPage />} />
+            <Route path="/contas-firma" element={<ContasFirma />} />
+            <Route path="/pagamentos" element={<Pagamentos />} />
+            <Route path="/pagamentos/new" element={<PagamentoFormPage />} />
+            <Route path="/pagamentos/:id/edit" element={<PagamentoFormPage />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/usuarios" element={<AdminRoute><Usuarios /></AdminRoute>} />
             <Route path="/perfis" element={<AdminRoute><Perfis /></AdminRoute>} />
